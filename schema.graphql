@@ -1,0 +1,47 @@
+type RequestBridgeToken @entity {
+  id: ID!
+  from: Bytes!
+  recipient: Bytes!
+  txHash: Bytes!
+  messageId: Bytes!
+  messageHash: Bytes!
+  tokens: [Bytes!]!
+  amounts: [BigInt!]!
+  block: BigInt!
+  timestamp: BigInt!
+}
+
+type RequestFixFail @entity {
+  id: ID!
+  txHash: Bytes!
+  messageIdToFix: Bytes!
+  messageId: Bytes!
+  messageHash: Bytes!
+  block: BigInt!
+  timestamp: BigInt!
+}
+
+type Execution @entity {
+  id: ID!
+  messageId: Bytes
+  status: Boolean
+  block: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type Token @entity {
+  id: ID!
+  address: Bytes!
+  remoteAddress: Bytes!
+  # bridgedVolume: BigInt!
+}
+
+type Message @entity {
+  id: ID!
+  msgId: Bytes
+  txHash: Bytes!
+  msgHash: Bytes
+  msgData: Bytes
+  signatures: [Bytes!]
+}

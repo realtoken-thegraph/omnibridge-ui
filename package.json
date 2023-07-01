@@ -1,73 +1,43 @@
 {
-  "name": "@omnibridge/ui",
+  "name": "@omnibridge/subgraph",
   "version": "1.0.0",
-  "keywords": [
-    "ethereum",
-    "react",
-    "workspaces",
-    "yarn"
-  ],
-  "private": true,
-  "scripts": {
-    "subgraph:auth": "yarn workspace @omnibridge/subgraph auth",
-    "subgraph:codegen": "yarn workspace @omnibridge/subgraph codegen",
-    "subgraph:build": "yarn workspace @omnibridge/subgraph build",
-    "subgraph:prepare-kovan": "yarn workspace @omnibridge/subgraph prepare-kovan",
-    "subgraph:deploy-kovan": "yarn workspace @omnibridge/subgraph deploy-kovan",
-    "subgraph:prepare-sokol": "yarn workspace @omnibridge/subgraph prepare-sokol",
-    "subgraph:deploy-sokol": "yarn workspace @omnibridge/subgraph deploy-sokol",
-    "subgraph:prepare-xdai": "yarn workspace @omnibridge/subgraph prepare-xdai",
-    "subgraph:deploy-xdai": "yarn workspace @omnibridge/subgraph deploy-xdai",
-    "subgraph:prepare-mainnet": "yarn workspace @omnibridge/subgraph prepare-mainnet",
-    "subgraph:deploy-mainnet": "yarn workspace @omnibridge/subgraph deploy-mainnet",
-    "subgraph:prepare-xdai-bsc": "yarn workspace @omnibridge/subgraph prepare-xdai-bsc",
-    "subgraph:deploy-xdai-bsc": "yarn workspace @omnibridge/subgraph deploy-xdai-bsc",
-    "subgraph:prepare-bsc-xdai": "yarn workspace @omnibridge/subgraph prepare-bsc-xdai",
-    "subgraph:deploy-bsc-xdai": "yarn workspace @omnibridge/subgraph deploy-bsc-xdai",
-    "subgraph:prepare-mainnet-bsc": "yarn workspace @omnibridge/subgraph prepare-mainnet-bsc",
-    "subgraph:deploy-mainnet-bsc": "yarn workspace @omnibridge/subgraph deploy-mainnet-bsc",
-    "subgraph:prepare-bsc-mainnet": "yarn workspace @omnibridge/subgraph prepare-bsc-mainnet",
-    "subgraph:deploy-bsc-mainnet": "yarn workspace @omnibridge/subgraph deploy-bsc-mainnet",
-    "dapp:build": "yarn workspace @omnibridge/dapp build",
-    "dapp:eject": "yarn workspace @omnibridge/dapp eject",
-    "dapp:start": "yarn workspace @omnibridge/dapp start",
-    "dapp:test": "yarn workspace @omnibridge/dapp test",
-    "dapp:lint": "yarn workspace @omnibridge/dapp lint",
-    "lint": "eslint --ignore-path .gitignore \"./packages/**/*.{ts,tsx,js,jsx}\"",
-    "format": "prettier --ignore-path .gitignore --write \"{*,**/*}.{ts,tsx,js,jsx,json,md}\"",
-    "prepare": "husky install"
+  "dependencies": {
+    "@graphprotocol/graph-cli": "^0.51.2",
+    "@graphprotocol/graph-ts": "^0.31.0"
   },
-  "workspaces": {
-    "nohoist": [
-      "**/@graphprotocol/graph-ts",
-      "**/@graphprotocol/graph-ts/**"
-    ],
-    "packages": [
-      "packages/*"
-    ]
+  "license": "MIT",
+  "scripts": {
+    "auth": "graph auth https://api.thegraph.com/deploy/ $GRAPH_ACCESS_TOKEN",
+    "prepare-mainnet": "mustache config/mainnet.json subgraph.template.yaml > subgraph.yaml",
+    "prepare-xdai": "mustache config/xdai.json subgraph.template.yaml > subgraph.yaml",
+    "prepare-kovan": "mustache config/kovan.json subgraph.template.yaml > subgraph.yaml",
+    "prepare-sokol": "mustache config/sokol.json subgraph.template.yaml > subgraph.yaml",
+    "prepare-xdai-bsc": "mustache config/xdai-bsc.json subgraph.template.yaml > subgraph.yaml",
+    "prepare-bsc-xdai": "mustache config/bsc-xdai.json subgraph.template.yaml > subgraph.yaml",
+    "prepare-xdai-poa": "mustache config/xdai-poa.json subgraph.template.yaml > subgraph.yaml",
+    "prepare-poa-xdai": "mustache config/poa-xdai.json subgraph.template.yaml > subgraph.yaml",
+    "prepare-mainnet-bsc": "mustache config/mainnet-bsc.json subgraph.template.yaml > subgraph.yaml",
+    "prepare-bsc-mainnet": "mustache config/bsc-mainnet.json subgraph.template.yaml > subgraph.yaml",
+    "predeploy-goerli": "mustache config/goerli.json subgraph.template.yaml > subgraph.yaml",
+    "predeploy-sepolia": "mustache config/sepolia.json subgraph.template.yaml > subgraph.yaml",
+    "codegen": "graph codegen --output-dir src/types/",
+    "build": "graph build",
+    "deploy-goerli": "graph deploy realtoken-thegraph/amb-goerli --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-sepolia": "graph deploy --studio omnibridge-amb",
+    "deploy-mainnet": "graph deploy raid-guild/mainnet-omnibridge --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-xdai": "graph deploy raid-guild/xdai-omnibridge --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-kovan": "graph deploy dan13ram/kovan-omnibridge --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-sokol": "graph deploy dan13ram/sokol-omnibridge --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-xdai-bsc": "graph deploy dan13ram/xdai-to-bsc-omnibridge --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-bsc-xdai": "graph deploy dan13ram/bsc-to-xdai-omnibridge --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-xdai-poa": "graph deploy dan13ram/xdai-to-poa-omnibridge --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-poa-xdai": "graph deploy dan13ram/poa-to-xdai-omnibridge --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-mainnet-bsc": "graph deploy dan13ram/mainnet-to-bsc-omnibridge --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-bsc-mainnet": "graph deploy dan13ram/bsc-to-mainnet-omnibridge --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/"
   },
   "devDependencies": {
-    "eslint-config-airbnb": "^19.0.4",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jsx-a11y": "^6.5.1",
-    "eslint-plugin-react": "^7.29.4",
-    "eslint-plugin-react-hooks": "^4.4.0",
-    "eslint-plugin-simple-import-sort": "^7.0.0",
-    "husky": "^7.0.4",
-    "lint-staged": "^12.3.7",
-    "prettier": "^2.6.2"
-  },
-  "license": "UNLICENSED",
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md}": "prettier --write"
-  },
-  "dependencies": {},
-  "resolutions": {
-    "react-error-overlay": "6.0.9"
+    "assemblyscript": "^0.19.20",
+    "matchstick-as": "^0.5.2",
+    "mustache": "^4.2.0"
   }
 }
