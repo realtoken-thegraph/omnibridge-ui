@@ -39,9 +39,5 @@ type Token @entity {
 
 type Message @entity {
   id: ID!
-  msgId: Bytes
-  txHash: Bytes!
-  msgHash: Bytes
-  msgData: Bytes
-  signatures: [Bytes!]
+  msgHash: Bytes!
 }
