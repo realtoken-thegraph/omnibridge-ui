@@ -19,7 +19,7 @@ import { UserRequestForSignature } from "../src/types/AMB/AMB";
 import { ethereum, Bytes } from "@graphprotocol/graph-ts";
 
 
-const REQUEST_BRIDGE_TOKENS_TYPE = "RequestBridgeTokens";
+const REQUEST_BRIDGE_TOKENS_TYPE = "RequestBridgeToken";
 const REQUEST_FIX_FAIL_TYPE = "RequestFixFail";
 const EXECUTION_TYPE = "Execution";
 const TOKEN_TYPE = "Token";

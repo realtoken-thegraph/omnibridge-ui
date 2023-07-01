@@ -18,7 +18,11 @@ dataSources:
         - name: AMB
           file: ./src/abis/amb.json
       entities:
-        - UserRequest
+        - RequestBridgeToken
+        - RequestFixFail
+        - Execution
+        - Message
+        - Token
       eventHandlers:
         - event: UserRequestForSignature(indexed bytes32,bytes)
           handler: handleUserRequestForSignature

@@ -7,7 +7,7 @@ import {
   CollectedSignatures,
 } from '../types/AMB/AMB';
 
-import { Execution, RequestFixFail, RequestBridgeTokens } from '../types/schema';
+import { Execution, RequestFixFail, RequestBridgeToken } from '../types/schema';
 
 import { mediator, mediatorAddress } from './constants';
 import { decodeWrapper } from '../helpers/decodeWrapper';
@@ -47,7 +47,7 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
       const recipient = tuppleForm[1].toAddress()
       const tokens = tuppleForm[2].toAddressArray()
       const amounts = tuppleForm[3].toBigIntArray()
-      const request = new RequestBridgeTokens(messageId.toHex())
+      const request = new RequestBridgeToken(messageId.toHex())
       request.from = from;
       request.recipient = recipient;
       request.txHash = txHash;
