@@ -7,7 +7,7 @@ import {
   CollectedSignatures,
 } from '../types/AMB/AMB';
 
-import { Execution, RequestFixFail, RequestBridgeToken } from '../types/schema';
+import { Execution, RequestFixFail, RequestBridgeToken, Token } from '../types/schema';
 
 import { mediator, mediatorAddress } from './constants';
 import { decodeWrapper } from '../helpers/decodeWrapper';
@@ -48,16 +48,27 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
       const tokens = tuppleForm[2].toAddressArray()
       const amounts = tuppleForm[3].toBigIntArray()
       const request = new RequestBridgeToken(messageId.toHex())
+      const tokenIds = tokens.map<string>((val) => val.toHex());
       request.from = from;
       request.recipient = recipient;
       request.txHash = txHash;
-      request.messageId = messageId
-      request.tokens = tokens.map<Bytes>((val) => Bytes.fromHexString(val.toHex()));
+      request.messageId = messageId;
+      request.type = 'Simple';
+      request.tokens = tokenIds;
       request.amounts = amounts;
       request.block = block;
       request.timestamp = timestamp;
       request.messageHash = Bytes.fromByteArray(crypto.keccak256(encodedData));
       request.save();
+      const len = tokens.length;
+      for (let index = 0; index < len; index++) {
+        const token = tokenIds[index];
+        const tokenEntity = Token.load(token)
+        if (tokenEntity != null) {
+          tokenEntity.bridgedVolume = tokenEntity.bridgedVolume.plus(amounts[index])
+          tokenEntity.save();
+        }
+      }
     }
   } else if (functionSignature.equals(fixFailedMessage)) {
     const decoded = Bytes.fromUint8Array(encodedData.subarray(HEADER_LENGTH + 4))
@@ -108,31 +119,4 @@ export function handleAffirmationCompleted(event: AffirmationCompleted): void {
   const messageId = event.params.messageId;
   const status = event.params.status
   handleExecution(executor, sender, messageId, status, event);
-}
-
-export function handleCollectedSignatures(event: CollectedSignatures): void {
-  // log.debug('Parsing CollectedSignatures', []);
-  // event.params.
-  // let ambInstance = AMB.bind(event.address);
-  // let message = ambInstance.try_message(event.params.messageHash);
-  // if (!message.reverted) {
-  //   let msg = Message.load(crypto.keccak256(message.value).toHexString());
-  //   if (msg != null) {
-  //     msg.msgData = message.value;
-  //     msg.msgHash = event.params.messageHash;
-  //     let signatures = new Array<Bytes>();
-  //     for (
-  //       let i = BigInt.fromI32(0);
-  //       i.lt(event.params.NumberOfCollectedSignatures);
-  //       i = i.plus(BigInt.fromI32(1))
-  //     ) {
-  //       let signature = ambInstance.try_signature(event.params.messageHash, i);
-  //       if (!signature.reverted) {
-  //         signatures.push(signature.value);
-  //       }
-  //     }
-  //     msg.signatures = signatures;
-  //     msg.save();
-  //   }
-  // }
 }

@@ -1,3 +1,9 @@
+enum RequestType {
+  Simple
+  BuyBack
+  PropertyVault
+}
+
 type RequestBridgeToken @entity {
   id: ID!
   from: Bytes!
@@ -5,7 +11,8 @@ type RequestBridgeToken @entity {
   txHash: Bytes!
   messageId: Bytes!
   messageHash: Bytes!
-  tokens: [Bytes!]!
+  type: RequestType!
+  tokens: [Token!]!
   amounts: [BigInt!]!
   block: BigInt!
   timestamp: BigInt!
@@ -23,8 +30,8 @@ type RequestFixFail @entity {
 
 type Execution @entity {
   id: ID!
-  messageId: Bytes
-  status: Boolean
+  messageId: Bytes!
+  status: Boolean!
   block: BigInt!
   timestamp: BigInt!
   txHash: Bytes!
@@ -32,12 +39,7 @@ type Execution @entity {
 
 type Token @entity {
   id: ID!
-  address: Bytes!
+  localAddress: Bytes!
   remoteAddress: Bytes!
-  # bridgedVolume: BigInt!
-}
-
-type Message @entity {
-  id: ID!
-  msgHash: Bytes!
+  bridgedVolume: BigInt!
 }

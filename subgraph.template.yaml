@@ -21,7 +21,6 @@ dataSources:
         - RequestBridgeToken
         - RequestFixFail
         - Execution
-        - Message
         - Token
       eventHandlers:
         - event: UserRequestForSignature(indexed bytes32,bytes)
@@ -32,8 +31,6 @@ dataSources:
           handler: handleRelayedMessage
         - event: AffirmationCompleted(indexed address,indexed address,indexed bytes32,bool)
           handler: handleAffirmationCompleted
-        - event: CollectedSignatures(address,bytes32,uint256)
-          handler: handleCollectedSignatures
       file: ./src/mappings/amb.ts
       language: wasm/assemblyscript
   - kind: ethereum/contract
@@ -51,11 +48,16 @@ dataSources:
           file: ./src/abis/mediator.json
       entities:
         - Token
+        - RequestBridgeToken
       eventHandlers:
         - event: TokenSet(address,address)
           handler: handleTokenSet
         - event: TokenListSet(address[],address[])
           handler: handleTokenListSet
+        - event: VaultClaimInitiated(bytes32)
+          handler: handleVaultClaim
+        - event: BuyBackInitiated(bytes32)
+          handler: handleBuyBack
       file: ./src/mappings/mediator.ts
       language: wasm/assemblyscript
 
