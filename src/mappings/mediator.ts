@@ -21,11 +21,19 @@ function getOrCreateToken(address: string): Token {
 
 export function handleTokenSet(event: TokenSet): void {
   const remoteAddress = event.params.remoteToken.toHex();
-
-  const tokenEntity = getOrCreateToken(remoteAddress);
-  tokenEntity.localAddress = event.params.localToken;
-  tokenEntity.bridgedVolume = ZERO;
-  tokenEntity.save();
+  const localAddress = event.params.localToken;
+  let token = Token.load(remoteAddress);
+    if (token == null) {
+      token = new Token(remoteAddress);
+      token.remoteAddress = Address.fromString(remoteAddress);
+      token.localAddress = localAddress;
+      token.bridgedVolume = ZERO;
+    } else if (token.localAddress != localAddress) {
+      token.localAddress = localAddress;
+      token.bridgedVolume = ZERO;
+      
+    }
+    token.save();
 }
 
 export function handleTokenListSet(event: TokenListSet): void {
@@ -35,10 +43,17 @@ export function handleTokenListSet(event: TokenListSet): void {
   const len = localTokenList.length;
   for (let i = 0; i < len; i++) {
     const remote = remoteTokenList[i].toHex();
-    const tokenEntity = getOrCreateToken(remote);
-    tokenEntity.localAddress = localTokenList[i];
-    tokenEntity.bridgedVolume = ZERO;
-    tokenEntity.save();
+    let token = Token.load(remote);
+    if (token == null) {
+      token = new Token(remote);
+      token.remoteAddress = Address.fromString(remote);
+      token.localAddress = localTokenList[i];
+      token.bridgedVolume = ZERO;
+    } else if (token.localAddress != localTokenList[i]) {
+      token.localAddress = localTokenList[i];
+      token.bridgedVolume = ZERO;
+    }
+    token.save();
   }
 }
 
