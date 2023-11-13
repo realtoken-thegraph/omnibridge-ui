@@ -1,9 +1,10 @@
 import { Address } from "@graphprotocol/graph-ts";
 
-import { RequestBridgeToken, Token } from "../types/schema";
+import { RequestBridgeToken, Token, Man, AdminFix } from "../types/schema";
 
 import {
   BuyBackInitiated,
+  ManualFix,
   TokenListSet,
   TokenSet,
   VaultClaimInitiated
@@ -17,6 +18,17 @@ function getOrCreateToken(address: string): Token {
     token.remoteAddress = Address.fromString(address);
   }
   return token;
+}
+
+export function handleManualFix(event: ManualFix): void {
+    const id = event.params.messageId.toHex();
+    const fix = new AdminFix(id)
+    fix.from = event.transaction.from;
+    fix.txHash = event.transaction.hash;
+    fix.messageId = event.params.messageId;
+    fix.block = event.block.number;
+    fix.timestamp = event.block.timestamp;
+    fix.save();
 }
 
 export function handleTokenSet(event: TokenSet): void {
@@ -54,14 +66,6 @@ export function handleTokenListSet(event: TokenListSet): void {
       token.bridgedVolume = ZERO;
     }
     token.save();
-  }
-}
-
-export function handleVaultClaim(event: VaultClaimInitiated): void {
-  const request = RequestBridgeToken.load(event.params.messageId.toHex())
-  if (request != null) {
-    request.type = 'PropertyVault'
-    request.save();
   }
 }
 

@@ -4,6 +4,15 @@ enum RequestType {
   PropertyVault
 }
 
+type AdminFix @entity(immutable: true) {
+  id: ID!
+  from: Bytes!
+  txHash: Bytes!
+  messageId: Bytes!
+  block: BigInt!
+  timestamp: BigInt!
+}
+
 type RequestBridgeToken @entity {
   id: ID!
   from: Bytes!
@@ -18,7 +27,7 @@ type RequestBridgeToken @entity {
   timestamp: BigInt!
 }
 
-type RequestFixFail @entity {
+type RequestFixFail @entity(immutable: true) {
   id: ID!
   txHash: Bytes!
   messageIdToFix: Bytes!
@@ -28,7 +37,7 @@ type RequestFixFail @entity {
   timestamp: BigInt!
 }
 
-type Execution @entity {
+type Execution @entity(immutable: true) {
   id: ID!
   messageId: Bytes!
   status: Boolean!

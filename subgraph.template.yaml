@@ -47,6 +47,7 @@ dataSources:
         - name: RealtMediatorAMB
           file: ./src/abis/mediator.json
       entities:
+        - AdminFix
         - Token
         - RequestBridgeToken
       eventHandlers:
@@ -54,10 +55,10 @@ dataSources:
           handler: handleTokenSet
         - event: TokenListSet(address[],address[])
           handler: handleTokenListSet
-        - event: VaultClaimInitiated(bytes32)
-          handler: handleVaultClaim
         - event: BuyBackInitiated(bytes32)
           handler: handleBuyBack
+        - event: ManualFix(bytes32)
+          handler: handleManualFix
       file: ./src/mappings/mediator.ts
       language: wasm/assemblyscript
 

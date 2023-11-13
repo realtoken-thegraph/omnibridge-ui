@@ -9,15 +9,17 @@ import {
 
 import { Execution, RequestFixFail, RequestBridgeToken, Token } from '../types/schema';
 
-import { mediator, mediatorAddress } from './constants';
+import { mediatorAddress } from './constants';
 import { decodeWrapper } from '../helpers/decodeWrapper';
 
 const HEADER_LENGTH = 83;
 const handleBridgedTokens = Bytes.fromHexString('0x401f9bc6');
 const fixFailedMessage = Bytes.fromHexString('0x0950d515');
+const handleBridgeTokensFromVault = Bytes.fromHexString('0x5ea33235');
 
 function handleExecution(executor: Address, sender: Address, messageId: Bytes, status: boolean, event: ethereum.Event): void {
-  if (executor.toHex() != mediator || sender.toHex() != mediator) return;
+  if (executor.notEqual(mediatorAddress) || sender.notEqual(mediatorAddress)) return;
+
   const id = messageId.toHex();
   const execution = new Execution(id);
   execution.messageId = messageId;
@@ -32,8 +34,8 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
   const sender = Address.fromUint8Array(encodedData.subarray(32, 52));
   const executor = Address.fromUint8Array(encodedData.subarray(52, 72));
 
-  if (sender.notEqual(mediatorAddress)) return;
-  if (executor.notEqual(mediatorAddress)) return;
+  if (sender.notEqual(mediatorAddress) || executor.notEqual(mediatorAddress)) return;
+
   const functionSignature = Bytes.fromUint8Array(encodedData.subarray(HEADER_LENGTH, HEADER_LENGTH + 4))
   const txHash = event.transaction.hash;
   const block = event.block.number;
@@ -70,7 +72,41 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
         }
       }
     }
-  } else if (functionSignature.equals(fixFailedMessage)) {
+  } else if (functionSignature.equals(handleBridgeTokensFromVault)) {
+    const decoded = decodeWrapper(Bytes.fromUint8Array(encodedData.subarray(HEADER_LENGTH)), "(address,address[],uint256[])")
+    if (decoded) {
+      const tuppleForm = decoded.toTuple();
+      const recipient = tuppleForm[0].toAddress()
+      const tokens = tuppleForm[1].toAddressArray()
+      const amounts = tuppleForm[2].toBigIntArray()
+
+      const request = new RequestBridgeToken(messageId.toHex())
+      const tokenIds = tokens.map<string>((val) => val.toHex());
+
+      request.from = recipient;
+      request.recipient = recipient;
+      request.txHash = txHash;
+      request.messageId = messageId;
+      request.type = 'PropertyVault';
+      request.tokens = tokenIds;
+      request.amounts = amounts;
+      request.block = block;
+      request.timestamp = timestamp;
+      request.messageHash = Bytes.fromByteArray(crypto.keccak256(encodedData));
+      request.save();
+      const len = tokens.length;
+      for (let index = 0; index < len; index++) {
+        const token = tokenIds[index];
+        const tokenEntity = Token.load(token)
+        if (tokenEntity != null) {
+          tokenEntity.bridgedVolume = tokenEntity.bridgedVolume.plus(amounts[index])
+          tokenEntity.save();
+        }
+      }
+
+    }
+  }
+  else if (functionSignature.equals(fixFailedMessage)) {
     const decoded = Bytes.fromUint8Array(encodedData.subarray(HEADER_LENGTH + 4))
     if (decoded) {
       const request = new RequestFixFail(messageId.toHex())
