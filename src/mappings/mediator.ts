@@ -1,24 +1,14 @@
 import { Address } from "@graphprotocol/graph-ts";
 
-import { RequestBridgeToken, Token, Man, AdminFix } from "../types/schema";
+import { RequestBridgeToken, Token, AdminFix } from "../types/schema";
 
 import {
   BuyBackInitiated,
   ManualFix,
   TokenListSet,
   TokenSet,
-  VaultClaimInitiated
 } from "../types/RealtMediatorAMB/RealtMediatorAMB";
 import { ZERO } from "../helpers/constants";
-
-function getOrCreateToken(address: string): Token {
-  let token = Token.load(address);
-  if (token == null) {
-    token = new Token(address);
-    token.remoteAddress = Address.fromString(address);
-  }
-  return token;
-}
 
 export function handleManualFix(event: ManualFix): void {
     const id = event.params.messageId.toHex();
