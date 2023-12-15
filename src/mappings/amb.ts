@@ -4,7 +4,6 @@ import {
   UserRequestForSignature,
   RelayedMessage,
   AffirmationCompleted,
-  CollectedSignatures,
 } from '../types/AMB/AMB';
 
 import { Execution, RequestFixFail, RequestBridgeToken, Token } from '../types/schema';
