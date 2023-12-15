@@ -51,11 +51,13 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
       const amounts = tuppleForm[3].toBigIntArray()
       const request = new RequestBridgeToken(messageId.toHex())
       const tokenIds = tokens.map<string>((val) => val.toHex());
+      const tokenBytes = tokens.map<Bytes>((val) => Bytes.fromByteArray(val));
       request.from = from;
       request.recipient = recipient;
       request.txHash = txHash;
       request.messageId = messageId;
       request.type = 'Simple';
+      request.tokensOrder = tokenBytes;
       request.tokens = tokenIds;
       request.amounts = amounts;
       request.block = block;
@@ -82,6 +84,7 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
 
       const request = new RequestBridgeToken(messageId.toHex())
       const tokenIds = tokens.map<string>((val) => val.toHex());
+      const tokenBytes = tokens.map<Bytes>((val) => Bytes.fromByteArray(val));
 
       request.from = recipient;
       request.recipient = recipient;
@@ -89,6 +92,7 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
       request.messageId = messageId;
       request.type = 'PropertyVault';
       request.tokens = tokenIds;
+      request.tokensOrder = tokenBytes;
       request.amounts = amounts;
       request.block = block;
       request.timestamp = timestamp;

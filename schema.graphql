@@ -22,6 +22,7 @@ type RequestBridgeToken @entity {
   messageHash: Bytes!
   type: RequestType!
   tokens: [Token!]!
+  tokensOrder: [Bytes!]!
   amounts: [BigInt!]!
   block: BigInt!
   timestamp: BigInt!
