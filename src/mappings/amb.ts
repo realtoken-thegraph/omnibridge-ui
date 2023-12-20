@@ -4,17 +4,22 @@ import {
   UserRequestForSignature,
   RelayedMessage,
   AffirmationCompleted,
+  CollectedSignatures,
 } from '../types/AMB/AMB';
 
-import { Execution, RequestFixFail, RequestBridgeToken, Token } from '../types/schema';
+import { Execution, RequestFixFail, RequestBridgeToken, Token, CollectedSignatureEntity, RequiredSignature } from '../types/schema';
 
 import { mediatorAddress } from './constants';
 import { decodeWrapper } from '../helpers/decodeWrapper';
+import { FIXFAILED, HEADER_LENGTH, PROPERTYVAULT, SIMPLE, fixFailedMessage, handleBridgeTokensFromVault, handleBridgedTokens } from './helpers';
 
-const HEADER_LENGTH = 83;
-const handleBridgedTokens = Bytes.fromHexString('0x401f9bc6');
-const fixFailedMessage = Bytes.fromHexString('0x0950d515');
-const handleBridgeTokensFromVault = Bytes.fromHexString('0x5ea33235');
+function getTypeFromSelector(selector: Bytes): string {
+  const c = selector.toHex();
+  if (c == handleBridgedTokens.toHex()) return SIMPLE;
+  if (c == handleBridgeTokensFromVault.toHex()) return PROPERTYVAULT;
+  if (c == fixFailedMessage.toHex()) return FIXFAILED;
+  return SIMPLE;
+}
 
 function handleExecution(executor: Address, sender: Address, messageId: Bytes, status: boolean, event: ethereum.Event): void {
   if (executor.notEqual(mediatorAddress) || sender.notEqual(mediatorAddress)) return;
@@ -40,6 +45,8 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
   const block = event.block.number;
   const timestamp = event.block.timestamp;
 
+  const messageHash = Bytes.fromByteArray(crypto.keccak256(encodedData));
+  const getRequiredSignature = RequiredSignature.load("now")!
   if (functionSignature.equals(handleBridgedTokens)) {
     const decoded = decodeWrapper(Bytes.fromUint8Array(encodedData.subarray(HEADER_LENGTH)), "(address,address,address[],uint256[])")
     if (decoded) {
@@ -51,17 +58,19 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
       const request = new RequestBridgeToken(messageId.toHex())
       const tokenIds = tokens.map<string>((val) => val.toHex());
       const tokenBytes = tokens.map<Bytes>((val) => Bytes.fromByteArray(val));
+
       request.from = from;
       request.recipient = recipient;
       request.txHash = txHash;
       request.messageId = messageId;
-      request.type = 'Simple';
+      request.type = SIMPLE;
       request.tokensOrder = tokenBytes;
       request.tokens = tokenIds;
       request.amounts = amounts;
       request.block = block;
       request.timestamp = timestamp;
-      request.messageHash = Bytes.fromByteArray(crypto.keccak256(encodedData));
+      request.messageHash = messageHash;
+      request.requiredSignature = getRequiredSignature.amount;
       request.save();
       const len = tokens.length;
       for (let index = 0; index < len; index++) {
@@ -89,13 +98,14 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
       request.recipient = recipient;
       request.txHash = txHash;
       request.messageId = messageId;
-      request.type = 'PropertyVault';
+      request.type = PROPERTYVAULT;
       request.tokens = tokenIds;
       request.tokensOrder = tokenBytes;
       request.amounts = amounts;
       request.block = block;
       request.timestamp = timestamp;
-      request.messageHash = Bytes.fromByteArray(crypto.keccak256(encodedData));
+      request.messageHash = messageHash;
+      request.requiredSignature = getRequiredSignature.amount;
       request.save();
       const len = tokens.length;
       for (let index = 0; index < len; index++) {
@@ -118,13 +128,48 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
         request.messageIdToFix = decoded
         request.messageId = messageId;
         request.block = block;
+        request.type = FIXFAILED;
         request.timestamp = timestamp;
-        request.messageHash = Bytes.fromByteArray(crypto.keccak256(encodedData));
+        request.messageHash = messageHash;
+        request.requiredSignature = getRequiredSignature.amount;
         request.save();
       }
     }
   } else {
     log.warning("function signature {} not found", [functionSignature.toHex()])
+  }
+}
+
+export function handleCollectedSignatures(
+  event: CollectedSignatures,
+): void {
+  if (event.transaction.input.length < 332) return;
+
+  const sender = Address.fromUint8Array(event.transaction.input.subarray(260, 280));
+  const executor = Address.fromUint8Array(event.transaction.input.subarray(280, 300));
+
+  if (sender.notEqual(mediatorAddress) || executor.notEqual(mediatorAddress)) return;
+
+  const messageHash = event.params.messageHash;
+
+  const decoded = decodeWrapper(event.transaction.input, "(bytes,bytes)")
+  if (decoded) {
+    const tuppleForm = decoded.toTuple();
+    const signature = tuppleForm[0].toBytes()
+    const message = tuppleForm[1].toBytes()
+
+    const entity = new CollectedSignatureEntity(messageHash.toHex())
+    entity.messageData = message;
+    entity.messageId = Bytes.fromUint8Array(message.subarray(0, 32));
+    const selector = Bytes.fromUint8Array(message.subarray(HEADER_LENGTH, HEADER_LENGTH + 4))
+    entity.type = getTypeFromSelector(selector)
+    entity.messageHash = messageHash;
+    entity.signature = signature;
+    entity.blockNumber = event.block.number;
+    entity.txHash = event.transaction.hash;
+    entity.save();
+  } else {
+    log.warning("couldn't decode in handleCollectedSignatures", [])
   }
 }
 

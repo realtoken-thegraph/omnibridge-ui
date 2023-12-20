@@ -2,6 +2,23 @@ enum RequestType {
   Simple
   BuyBack
   PropertyVault
+  FixFailedMsg
+}
+
+type RequiredSignature @entity {
+  id: ID!
+  amount: BigInt!
+}
+
+type CollectedSignatureEntity @entity(immutable: true) {
+  id: ID!
+  messageHash: Bytes!
+  messageData: Bytes!
+  messageId: Bytes!
+  signature: Bytes!
+  txHash: Bytes!
+  type: RequestType!
+  blockNumber: BigInt!
 }
 
 type AdminFix @entity(immutable: true) {
@@ -26,6 +43,7 @@ type RequestBridgeToken @entity {
   amounts: [BigInt!]!
   block: BigInt!
   timestamp: BigInt!
+  requiredSignature: BigInt!
 }
 
 type RequestFixFail @entity(immutable: true) {
@@ -34,8 +52,10 @@ type RequestFixFail @entity(immutable: true) {
   messageIdToFix: Bytes!
   messageId: Bytes!
   messageHash: Bytes!
+  type: RequestType!
   block: BigInt!
   timestamp: BigInt!
+  requiredSignature: BigInt!
 }
 
 type Execution @entity(immutable: true) {

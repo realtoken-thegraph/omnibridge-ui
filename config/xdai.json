@@ -3,5 +3,7 @@
   "startBlock": "30962179",
   "amb": "0x75df5af045d91108662d8080fd1fefad6aa0bb59",
   "mediator": "0x4bf18196e7689c0bcf60e1ee81ec5d8f29ad18bd",
-  "mediatorStartBlock": "30962179"
+  "mediatorStartBlock": "30962179",
+  "validator": "0xa280fed8d7cad9a76c8b50ca5c33c2534ffa5008",
+  "validatorStartBlock": "7904944"
 }

@@ -22,7 +22,11 @@ dataSources:
         - RequestFixFail
         - Execution
         - Token
+        - RequiredSignature
+        - CollectedSignatureEntity
       eventHandlers:
+        - event: CollectedSignatures(address,bytes32,uint256)
+          handler: handleCollectedSignatures
         - event: UserRequestForSignature(indexed bytes32,bytes)
           handler: handleUserRequestForSignature
         - event: UserRequestForAffirmation(indexed bytes32,bytes)
@@ -61,4 +65,25 @@ dataSources:
           handler: handleManualFix
       file: ./src/mappings/mediator.ts
       language: wasm/assemblyscript
+  - kind: ethereum/contract
+    name: BridgeValidators
+    network: {{network}}
+    source:
+      abi: BridgeValidators
+      address: '{{validator}}'
+      startBlock: {{validatorStartBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      abis:
+        - name: BridgeValidators
+          file: ./src/abis/bridgeValidators.json
+      entities:
+        - RequiredSignature
+      eventHandlers:
+        - event: RequiredSignaturesChanged(uint256)
+          handler: handleRequiredSignaturesChanged
+      file: ./src/mappings/bridgeValidator.ts
+      language: wasm/assemblyscript
+
 

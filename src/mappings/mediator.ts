@@ -9,6 +9,7 @@ import {
   TokenSet,
 } from "../types/RealtMediatorAMB/RealtMediatorAMB";
 import { ZERO } from "../helpers/constants";
+import { BUYBACK } from "./helpers";
 
 export function handleManualFix(event: ManualFix): void {
     const id = event.params.messageId.toHex();
@@ -62,7 +63,7 @@ export function handleTokenListSet(event: TokenListSet): void {
 export function handleBuyBack(event: BuyBackInitiated): void {
   const request = RequestBridgeToken.load(event.params.messageId.toHex())
   if (request != null) {
-    request.type = 'BuyBack'
+    request.type = BUYBACK;
     request.save();
   }
 }
