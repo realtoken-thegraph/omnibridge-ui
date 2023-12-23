@@ -10,7 +10,7 @@ const ADDRESS_LENGTH = 20;
 export const handleBridgedTokens = Bytes.fromHexString('0x401f9bc6') as Bytes;
 export const fixFailedMessage = Bytes.fromHexString('0x0950d515') as Bytes;
 export const handleBridgeTokensFromVault = Bytes.fromHexString('0x5ea33235');
-
+export const submitSignature = Bytes.fromHexString('0x630cea8e')
 
 export const SIMPLE = 'Simple';
 export const BUYBACK = 'BuyBack';

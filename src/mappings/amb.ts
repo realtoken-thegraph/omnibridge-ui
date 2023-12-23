@@ -5,13 +5,14 @@ import {
   RelayedMessage,
   AffirmationCompleted,
   CollectedSignatures,
+  SignedForUserRequest,
 } from '../types/AMB/AMB';
 
 import { Execution, RequestFixFail, RequestBridgeToken, Token, CollectedSignatureEntity, RequiredSignature } from '../types/schema';
 
 import { mediatorAddress } from './constants';
 import { decodeWrapper } from '../helpers/decodeWrapper';
-import { FIXFAILED, HEADER_LENGTH, PROPERTYVAULT, SIMPLE, fixFailedMessage, handleBridgeTokensFromVault, handleBridgedTokens } from './helpers';
+import { FIXFAILED, HEADER_LENGTH, PROPERTYVAULT, SIMPLE, fixFailedMessage, handleBridgeTokensFromVault, handleBridgedTokens, submitSignature } from './helpers';
 
 function getTypeFromSelector(selector: Bytes): string {
   const c = selector.toHex();
@@ -118,59 +119,97 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
       }
 
     }
-  }
-  else if (functionSignature.equals(fixFailedMessage)) {
-    const decoded = Bytes.fromUint8Array(encodedData.subarray(HEADER_LENGTH + 4))
+  } else if (functionSignature.equals(fixFailedMessage)) {
+    const decoded = decodeWrapper(Bytes.fromUint8Array(encodedData.subarray(HEADER_LENGTH)), "(bytes32)")
     if (decoded) {
+      const tuppleForm = decoded.toTuple();
+      const messageIdToFix = tuppleForm[0].toBytes()
       const request = new RequestFixFail(messageId.toHex())
-      if (request) {
-        request.txHash = txHash;
-        request.messageIdToFix = decoded
-        request.messageId = messageId;
-        request.block = block;
-        request.type = FIXFAILED;
-        request.timestamp = timestamp;
-        request.messageHash = messageHash;
-        request.requiredSignature = getRequiredSignature.amount;
-        request.save();
-      }
+      request.txHash = txHash;
+      request.messageIdToFix = messageIdToFix
+      request.messageId = messageId;
+      request.type = FIXFAILED;
+      request.block = block;
+      request.timestamp = timestamp;
+      request.messageHash = messageHash;
+      request.requiredSignature = getRequiredSignature.amount;
+      request.save();
     }
   } else {
     log.warning("function signature {} not found", [functionSignature.toHex()])
+    log.warning("tx hash {}", [event.transaction.hash.toHex()])
   }
 }
 
-export function handleCollectedSignatures(
-  event: CollectedSignatures,
-): void {
-  if (event.transaction.input.length < 332) return;
+function getInput(input: Bytes): Bytes | null {
+  const inputString = input.toHex().slice(2)
+  const lastIndex = inputString.lastIndexOf(submitSignature.toHex().slice(2))
+  if (lastIndex === -1 || inputString.length - lastIndex < 664) return null;
+  return Bytes.fromHexString(inputString.substring(lastIndex));
+}
 
-  const sender = Address.fromUint8Array(event.transaction.input.subarray(260, 280));
-  const executor = Address.fromUint8Array(event.transaction.input.subarray(280, 300));
+export function handleSignedForUserRequest(
+  event: SignedForUserRequest,
+): void {
+  const input = getInput(event.transaction.input)
+  if (!input) return;
+
+  const sender = Address.fromUint8Array(input.subarray(260, 280));
+  const executor = Address.fromUint8Array(input.subarray(280, 300));
 
   if (sender.notEqual(mediatorAddress) || executor.notEqual(mediatorAddress)) return;
 
   const messageHash = event.params.messageHash;
 
-  const decoded = decodeWrapper(event.transaction.input, "(bytes,bytes)")
+  const decoded = decodeWrapper(input, "(bytes,bytes)")
   if (decoded) {
     const tuppleForm = decoded.toTuple();
     const signature = tuppleForm[0].toBytes()
     const message = tuppleForm[1].toBytes()
 
-    const entity = new CollectedSignatureEntity(messageHash.toHex())
-    entity.messageData = message;
-    entity.messageId = Bytes.fromUint8Array(message.subarray(0, 32));
-    const selector = Bytes.fromUint8Array(message.subarray(HEADER_LENGTH, HEADER_LENGTH + 4))
-    entity.type = getTypeFromSelector(selector)
-    entity.messageHash = messageHash;
-    entity.signature = signature;
-    entity.blockNumber = event.block.number;
-    entity.txHash = event.transaction.hash;
-    entity.save();
+    let entity = CollectedSignatureEntity.load(messageHash.toHex())
+    if (entity == null) {
+      entity = new CollectedSignatureEntity(messageHash.toHex())
+      entity.messageData = message;
+      entity.messageId = Bytes.fromUint8Array(message.subarray(0, 32));
+      const selector = Bytes.fromUint8Array(message.subarray(HEADER_LENGTH, HEADER_LENGTH + 4))
+      entity.type = getTypeFromSelector(selector)
+      entity.messageHash = messageHash;
+      entity.ready = false;
+      entity.signatures = [signature];
+      entity.blockNumber = event.block.number;
+      entity.txHash = event.transaction.hash;
+      entity.save();
+    } else {
+      const sig = entity.signatures
+      sig.push(signature)
+      entity.signatures = sig;
+      entity.txHash = event.transaction.hash;
+      entity.blockNumber = event.block.number;
+      entity.save();
+    }
   } else {
-    log.warning("couldn't decode in handleCollectedSignatures", [])
+    log.warning("couldn't decode in handleSignedForUserRequest", [])
   }
+}
+
+export function handleCollectedSignatures(
+  event: CollectedSignatures,
+): void {  
+  const input = getInput(event.transaction.input)
+  if (!input) return;
+  const sender = Address.fromUint8Array(input.subarray(260, 280));
+  const executor = Address.fromUint8Array(input.subarray(280, 300));
+
+  if (sender.notEqual(mediatorAddress) || executor.notEqual(mediatorAddress)) return;
+
+  const messageHash = event.params.messageHash;
+  const entity = CollectedSignatureEntity.load(messageHash.toHex())
+  if (entity == null) return log.error("Got collected signatures without request for user signature!", [])
+  entity.ready = true;  
+  entity.txHash = event.transaction.hash;
+  entity.blockNumber = event.block.number;
+  entity.save();
 }
 
 export function handleUserRequestForAffirmation(

@@ -10,12 +10,13 @@ type RequiredSignature @entity {
   amount: BigInt!
 }
 
-type CollectedSignatureEntity @entity(immutable: true) {
+type CollectedSignatureEntity @entity {
   id: ID!
   messageHash: Bytes!
   messageData: Bytes!
   messageId: Bytes!
-  signature: Bytes!
+  signatures: [Bytes!]!
+  ready: Boolean!
   txHash: Bytes!
   type: RequestType!
   blockNumber: BigInt!

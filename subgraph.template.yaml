@@ -27,6 +27,8 @@ dataSources:
       eventHandlers:
         - event: CollectedSignatures(address,bytes32,uint256)
           handler: handleCollectedSignatures
+        - event: SignedForUserRequest(indexed address,bytes32)
+          handler: handleSignedForUserRequest
         - event: UserRequestForSignature(indexed bytes32,bytes)
           handler: handleUserRequestForSignature
         - event: UserRequestForAffirmation(indexed bytes32,bytes)
