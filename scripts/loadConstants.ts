@@ -1,4 +1,4 @@
-const supportedNetwork = ["goerli", "mainnet", "sepolia", "xdai" ]
+const supportedNetwork = ["goerli", "mainnet", "sepolia", "gnosis" ]
 import fs from "fs/promises"
 import path from "path"
 const main = async (networkName: string) => {

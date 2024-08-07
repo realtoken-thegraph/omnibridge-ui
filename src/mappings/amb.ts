@@ -1,4 +1,4 @@
-import { Bytes, crypto, Address, ethereum, log } from '@graphprotocol/graph-ts';
+import { Bytes, crypto, Address, ethereum, log, BigInt } from '@graphprotocol/graph-ts';
 import {
   UserRequestForAffirmation,
   UserRequestForSignature,
@@ -13,6 +13,7 @@ import { Execution, RequestFixFail, RequestBridgeToken, Token, CollectedSignatur
 import { mediatorAddress } from './constants';
 import { decodeWrapper } from '../helpers/decodeWrapper';
 import { FIXFAILED, HEADER_LENGTH, PROPERTYVAULT, SIMPLE, fixFailedMessage, handleBridgeTokensFromVault, handleBridgedTokens, submitSignature } from './helpers';
+import { currentId } from './bridgeValidator';
 
 function getTypeFromSelector(selector: Bytes): string {
   const c = selector.toHex();
@@ -39,15 +40,20 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
   const sender = Address.fromUint8Array(encodedData.subarray(32, 52));
   const executor = Address.fromUint8Array(encodedData.subarray(52, 72));
 
-  if (sender.notEqual(mediatorAddress) || executor.notEqual(mediatorAddress)) return;
+  if (sender.notEqual(mediatorAddress) || executor.notEqual(mediatorAddress)) return log.error("sender {} executor {} | @ {}", [sender.toHex(), executor.toHex(), event.transaction.hash.toHex()])
 
   const functionSignature = Bytes.fromUint8Array(encodedData.subarray(HEADER_LENGTH, HEADER_LENGTH + 4))
   const txHash = event.transaction.hash;
   const block = event.block.number;
   const timestamp = event.block.timestamp;
-
+  
   const messageHash = Bytes.fromByteArray(crypto.keccak256(encodedData));
-  const getRequiredSignature = RequiredSignature.load("now")!
+  let getRequiredSignature = RequiredSignature.load(currentId)
+  if (getRequiredSignature == null) {
+    getRequiredSignature = new RequiredSignature(currentId)
+    getRequiredSignature.amount = BigInt.fromI32(4);
+    getRequiredSignature.save();
+  }
   if (functionSignature.equals(handleBridgedTokens)) {
     const decoded = decodeWrapper(Bytes.fromUint8Array(encodedData.subarray(HEADER_LENGTH)), "(address,address,address[],uint256[])")
     if (decoded) {

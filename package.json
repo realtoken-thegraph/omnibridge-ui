@@ -11,7 +11,7 @@
   "scripts": {
     "auth": "graph auth https://api.thegraph.com/deploy/ $GRAPH_ACCESS_TOKEN",
     "prepare-mainnet": "mustache config/mainnet.json subgraph.template.yaml > subgraph.yaml",
-    "prepare-xdai": "mustache config/xdai.json subgraph.template.yaml > subgraph.yaml",
+    "prepare-gnosis": "mustache config/gnosis.json subgraph.template.yaml > subgraph.yaml",
     "prepare-goerli": "mustache config/goerli.json subgraph.template.yaml > subgraph.yaml",
     "prepare-sepolia": "mustache config/sepolia.json subgraph.template.yaml > subgraph.yaml",
     "load": "ts-node scripts/loadConstants.ts",
@@ -21,7 +21,7 @@
     "deploy-goerli": "yarn prepare-goerli && yarn load goerli && yarn codegen && yarn build && graph deploy realtoken-thegraph/amb-goerli --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
     "deploy-sepolia": "yarn prepare-sepolia && yarn load sepolia && yarn codegen && yarn build && graph deploy --studio omnibridge-amb",
     "deploy-mainnet": "yarn prepare-mainnet && yarn load mainnet && yarn codegen && yarn build && graph deploy realtoken-thegraph/bridge-eth --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
-    "deploy-xdai": "yarn prepare-xdai && yarn load xdai && yarn codegen && yarn build && graph deploy realtoken-thegraph/bridge-gnosis --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/"
+    "deploy-gnosis": "yarn prepare-gnosis && yarn load gnosis && yarn codegen && yarn build && graph deploy --studio bridge-gnosis-depreciated"
   },
   "devDependencies": {
     "assemblyscript": "^0.19.20",
