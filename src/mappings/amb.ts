@@ -126,13 +126,11 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
 
     }
   } else if (functionSignature.equals(fixFailedMessage)) {
-    const decoded = decodeWrapper(Bytes.fromUint8Array(encodedData.subarray(HEADER_LENGTH)), "(bytes32)")
-    if (decoded) {
-      const tuppleForm = decoded.toTuple();
-      const messageIdToFix = tuppleForm[0].toBytes()
+    const decoded = Bytes.fromUint8Array(encodedData.subarray(HEADER_LENGTH + 4))
+    if (decoded.length === 32) {
       const request = new RequestFixFail(messageId.toHex())
       request.txHash = txHash;
-      request.messageIdToFix = messageIdToFix
+      request.messageIdToFix = decoded
       request.messageId = messageId;
       request.type = FIXFAILED;
       request.block = block;
@@ -140,6 +138,8 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
       request.messageHash = messageHash;
       request.requiredSignature = getRequiredSignature.amount;
       request.save();
+    } else {
+      log.error("decoded bytes not equal 32 == {}", [decoded.toHex()])
     }
   } else {
     log.warning("function signature {} not found", [functionSignature.toHex()])

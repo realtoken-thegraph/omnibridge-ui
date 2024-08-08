@@ -82,8 +82,8 @@ describe("handleUserRequestForSignature()", () => {
   });
 
   test("Should create a new Entity fixFailedMessage", () => {
-    const messageId = Bytes.fromHexString("0x0005000080bc8e935be9775da0aff795ea3437cced5aa1b7000000000000006a");
-    const encodedData = Bytes.fromHexString("0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000770005000080bc8e935be9775da0aff795ea3437cced5aa1b7000000000000006a4ad100a0c602f27fa3ecdaee8c58e9427d6a2a9b4ad100a0c602f27fa3ecdaee8c58e9427d6a2a9bffffffff030100aa36a7050950d515000500002e231b96e681c26b0dd7f8b7fbee360177352e6c000000000000005a000000000000000000");
+    const messageId = Bytes.fromHexString("000500004AC82B41BD819DD871590B510316F2385CB196FB0000000000025904");
+    const encodedData = Bytes.fromHexString("000500004AC82B41BD819DD871590B510316F2385CB196FB00000000000259044BF18196E7689C0BCF60E1EE81EC5D8F29AD18BD4BF18196E7689C0BCF60E1EE81EC5D8F29AD18BD003D090001010001640950D51500050000A7823D6F1E31569F51861E345B30C6BEBF70EBE70000000000015F20");
     const messageIdParam = new ethereum.EventParam('messageId', ethereum.Value.fromBytes(messageId))
     const encodedDataParam = new ethereum.EventParam('encodedData', ethereum.Value.fromBytes(encodedData))
 
@@ -94,7 +94,7 @@ describe("handleUserRequestForSignature()", () => {
     assert.entityCount(REQUEST_FIX_FAIL_TYPE, 0)
     handleUserRequestForSignature(event);
     assert.entityCount(REQUEST_FIX_FAIL_TYPE, 1)
-    assert.fieldEquals(REQUEST_FIX_FAIL_TYPE, messageId.toHex(), 'messageIdToFix', "0x0005000080bc8e935be9775da0aff795ea3437cced5aa1b70000000000000000")
+    assert.fieldEquals(REQUEST_FIX_FAIL_TYPE, messageId.toHex(), 'messageIdToFix', "0x00050000a7823d6f1e31569f51861e345b30c6bebf70ebe70000000000015f20")
     assert.fieldEquals(REQUEST_FIX_FAIL_TYPE, messageId.toHex(), 'messageId', messageId.toHex())
   });
 
