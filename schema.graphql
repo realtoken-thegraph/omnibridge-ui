@@ -69,8 +69,13 @@ type Execution @entity(immutable: true) {
 }
 
 type Token @entity {
-  id: ID!
+  id: ID! # localAddress
   localAddress: Bytes!
   remoteAddress: Bytes!
   bridgedVolume: BigInt!
+}
+
+type RemoteToken @entity {
+  id: ID! # remoteAddress
+  localAddress: Bytes!
 }

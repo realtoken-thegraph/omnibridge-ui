@@ -21,7 +21,9 @@
     "deploy-goerli": "yarn prepare-goerli && yarn load goerli && yarn codegen && yarn build && graph deploy realtoken-thegraph/amb-goerli --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
     "deploy-sepolia": "yarn prepare-sepolia && yarn load sepolia && yarn codegen && yarn build && graph deploy --studio omnibridge-amb",
     "deploy-mainnet": "yarn prepare-mainnet && yarn load mainnet && yarn codegen && yarn build && graph deploy --studio bridge-eth",
-    "deploy-gnosis": "yarn prepare-gnosis && yarn load gnosis && yarn codegen && yarn build && graph deploy --studio bridge-gnosis-2"
+    "deploy-gnosis": "yarn prepare-gnosis && yarn load gnosis && yarn codegen && yarn build && graph deploy --studio bridge-gnosis-2",
+    "deploy-mainnet-staging": "yarn prepare-mainnet && yarn load mainnet && yarn codegen && yarn build && graph deploy --studio bridge-eth",
+    "deploy-gnosis-staging": "yarn prepare-gnosis && yarn load gnosis && yarn codegen && yarn build && graph deploy --studio bridge-gnosis-2"
   },
   "devDependencies": {
     "assemblyscript": "^0.19.20",
