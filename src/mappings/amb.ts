@@ -39,16 +39,15 @@ function handleExecution(executor: Address, sender: Address, messageId: Bytes, s
 
 function remoteTokenToLocalToken(remoteTokens: Address[]): Address[] {
   const len = remoteTokens.length;
-  const res = new Array<Address>(len)
-    for (let i = 0; i < len; i++) {
-      let remoteToken = RemoteToken.load(remoteTokens[i].toHex())  
-      if (remoteToken == null) {
-        res.push(ZERO_ADDRESS)
-      } else {
-        res.push(Address.fromBytes(remoteToken.localAddress))
-      }
+  const res = new Array<Address>(len).fill(ZERO_ADDRESS)
+  
+  for (let i = 0; i < len; i++) {
+    let remoteToken = RemoteToken.load(remoteTokens[i].toHex())  
+    if (remoteToken != null) {
+      res[i] = Address.fromBytes(remoteToken.localAddress)
     }
-    return res;
+  }
+  return res;
 }
 function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Event): void {
   const sender = Address.fromUint8Array(encodedData.subarray(32, 52));
@@ -114,7 +113,7 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
       const request = new RequestBridgeToken(messageId.toHex())
       const tokenIds = tokens.map<string>((val) => val.toHex());
       const tokenBytes = tokens.map<Bytes>((val) => Bytes.fromByteArray(val));
-
+      
       request.from = recipient;
       request.recipient = recipient;
       request.txHash = txHash;
