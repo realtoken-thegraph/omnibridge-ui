@@ -8,12 +8,13 @@ import {
   SignedForUserRequest,
 } from '../types/AMB/AMB';
 
-import { Execution, RequestFixFail, RequestBridgeToken, Token, CollectedSignatureEntity, RequiredSignature } from '../types/schema';
+import { Execution, RequestFixFail, RequestBridgeToken, Token, CollectedSignatureEntity, RequiredSignature, RemoteToken } from '../types/schema';
 
 import { mediatorAddress } from './constants';
 import { decodeWrapper } from '../helpers/decodeWrapper';
 import { FIXFAILED, HEADER_LENGTH, PROPERTYVAULT, SIMPLE, fixFailedMessage, handleBridgeTokensFromVault, handleBridgedTokens, submitSignature } from './helpers';
 import { currentId } from './bridgeValidator';
+import { ZERO_ADDRESS } from '../helpers/constants';
 
 function getTypeFromSelector(selector: Bytes): string {
   const c = selector.toHex();
@@ -36,6 +37,18 @@ function handleExecution(executor: Address, sender: Address, messageId: Bytes, s
   execution.save();
 }
 
+function remoteTokenToLocalToken(remoteTokens: Address[]): Address[] {
+  const len = remoteTokens.length;
+  const res = new Array<Address>(len).fill(ZERO_ADDRESS)
+  
+  for (let i = 0; i < len; i++) {
+    let remoteToken = RemoteToken.load(remoteTokens[i].toHex())  
+    if (remoteToken != null) {
+      res[i] = Address.fromBytes(remoteToken.localAddress)
+    }
+  }
+  return res;
+}
 function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Event): void {
   const sender = Address.fromUint8Array(encodedData.subarray(32, 52));
   const executor = Address.fromUint8Array(encodedData.subarray(52, 72));
@@ -60,7 +73,7 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
       const tuppleForm = decoded.toTuple();
       const from = tuppleForm[0].toAddress()
       const recipient = tuppleForm[1].toAddress()
-      const tokens = tuppleForm[2].toAddressArray()
+      const tokens = remoteTokenToLocalToken(tuppleForm[2].toAddressArray())
       const amounts = tuppleForm[3].toBigIntArray()
       const request = new RequestBridgeToken(messageId.toHex())
       const tokenIds = tokens.map<string>((val) => val.toHex());
@@ -94,13 +107,13 @@ function handleRequest(encodedData: Bytes, messageId: Bytes, event: ethereum.Eve
     if (decoded) {
       const tuppleForm = decoded.toTuple();
       const recipient = tuppleForm[0].toAddress()
-      const tokens = tuppleForm[1].toAddressArray()
+      const tokens = remoteTokenToLocalToken(tuppleForm[1].toAddressArray())
       const amounts = tuppleForm[2].toBigIntArray()
 
       const request = new RequestBridgeToken(messageId.toHex())
       const tokenIds = tokens.map<string>((val) => val.toHex());
       const tokenBytes = tokens.map<Bytes>((val) => Bytes.fromByteArray(val));
-
+      
       request.from = recipient;
       request.recipient = recipient;
       request.txHash = txHash;

@@ -1,6 +1,6 @@
-import { Address } from "@graphprotocol/graph-ts";
+import { Address, store } from "@graphprotocol/graph-ts";
 
-import { RequestBridgeToken, Token, AdminFix } from "../types/schema";
+import { RequestBridgeToken, Token, AdminFix, RemoteToken } from "../types/schema";
 
 import {
   BuyBackInitiated,
@@ -8,7 +8,7 @@ import {
   TokenListSet,
   TokenSet,
 } from "../types/RealtMediatorAMB/RealtMediatorAMB";
-import { ZERO } from "../helpers/constants";
+import { ZERO, ZERO_ADDRESS } from "../helpers/constants";
 import { BUYBACK } from "./helpers";
 
 export function handleManualFix(event: ManualFix): void {
@@ -22,21 +22,43 @@ export function handleManualFix(event: ManualFix): void {
     fix.save();
 }
 
-export function handleTokenSet(event: TokenSet): void {
-  const remoteAddress = event.params.remoteToken.toHex();
-  const localAddress = event.params.localToken;
-  let token = Token.load(remoteAddress);
-    if (token == null) {
-      token = new Token(remoteAddress);
-      token.remoteAddress = Address.fromString(remoteAddress);
-      token.localAddress = localAddress;
-      token.bridgedVolume = ZERO;
-    } else if (token.localAddress != localAddress) {
-      token.localAddress = localAddress;
-      token.bridgedVolume = ZERO;
-      
+function getOrCreateRemoteToken(remoteTokenId: string): RemoteToken {
+  let remoteToken = RemoteToken.load(remoteTokenId) 
+  if (remoteToken == null) {
+    remoteToken = new RemoteToken(remoteTokenId)
+  }
+  return remoteToken;
+}
+
+function remoteTokenLogic(remoteTokenParam: Address, localTokenParam: Address): void {
+  const remoteToken = getOrCreateRemoteToken(remoteTokenParam.toHex());
+  remoteToken.localAddress = localTokenParam;
+  remoteToken.save();
+}
+
+function tokenSetLogic(localTokenParam: Address, remoteTokenParam: Address): void {
+  const localTokenId = localTokenParam.toHex();
+  let token = Token.load(localTokenId);
+  if (token == null) {
+    if (remoteTokenParam == ZERO_ADDRESS) return;
+    token = new Token(localTokenId);
+    token.remoteAddress = remoteTokenParam;
+    token.localAddress = localTokenParam;
+    token.bridgedVolume = ZERO;
+    remoteTokenLogic(remoteTokenParam, localTokenParam)
+  } else if (token.remoteAddress != remoteTokenParam) {
+    token.remoteAddress = remoteTokenParam;
+    if (remoteTokenParam != ZERO_ADDRESS) {
+      remoteTokenLogic(remoteTokenParam, localTokenParam)
+    } else {
+      store.remove('RemoteToken', remoteTokenParam.toHex())
     }
-    token.save();
+  }
+  token.save();
+}
+
+export function handleTokenSet(event: TokenSet): void {
+  tokenSetLogic(event.params.localToken, event.params.remoteToken);
 }
 
 export function handleTokenListSet(event: TokenListSet): void {
@@ -45,18 +67,7 @@ export function handleTokenListSet(event: TokenListSet): void {
 
   const len = localTokenList.length;
   for (let i = 0; i < len; i++) {
-    const remote = remoteTokenList[i].toHex();
-    let token = Token.load(remote);
-    if (token == null) {
-      token = new Token(remote);
-      token.remoteAddress = Address.fromString(remote);
-      token.localAddress = localTokenList[i];
-      token.bridgedVolume = ZERO;
-    } else if (token.localAddress != localTokenList[i]) {
-      token.localAddress = localTokenList[i];
-      token.bridgedVolume = ZERO;
-    }
-    token.save();
+    tokenSetLogic(localTokenList[i], remoteTokenList[i]);
   }
 }
 
